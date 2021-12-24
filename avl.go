@@ -7,14 +7,14 @@ import (
 	"./utils"
 )
 
-type node struct {
-	left   *node
-	right  *node
+type avl struct {
+	left   *avl
+	right  *avl
 	key    int
 	height int
 }
 
-func (node *node) getHeight() int {
+func (node *avl) getHeight() int {
 	if node == nil {
 		return -1
 	} else {
@@ -22,7 +22,7 @@ func (node *node) getHeight() int {
 	}
 }
 
-func (node *node) getBF() int {
+func (node *avl) getBF() int {
 	if node == nil {
 		return 0
 	}
@@ -33,9 +33,9 @@ func (node *node) getBF() int {
 	return rh - lh
 }
 
-func (node *node) getMinNode() *node {
+func (node *avl) getMinNode() *avl {
 	if node == nil {
-		return nil
+		return node
 	} else if node.left == nil {
 		return node
 	} else {
@@ -43,9 +43,9 @@ func (node *node) getMinNode() *node {
 	}
 }
 
-func (node *node) getMaxNode() *node {
+func (node *avl) getMaxNode() *avl {
 	if node == nil {
-		return nil
+		return node
 	} else if node.right == nil {
 		return node
 	} else {
@@ -54,7 +54,7 @@ func (node *node) getMaxNode() *node {
 }
 
 // Return new root
-func (node *node) rotateLeft() *node {
+func (node *avl) rotateLeft() *avl {
 	temp := node.right
 	node.right = node.right.left
 	temp.left = node
@@ -67,7 +67,7 @@ func (node *node) rotateLeft() *node {
 }
 
 // Return new root
-func (node *node) rotateRight() *node {
+func (node *avl) rotateRight() *avl {
 	temp := node.left
 	node.left = node.left.right
 	temp.right = node
@@ -85,17 +85,17 @@ func (node *node) rotateRight() *node {
 }
 
 // Return new root (if rotated)
-func (root *node) insert(key int) *node {
+func (root *avl) insert(key int) *avl {
 	// Inserting
 	if key > root.key {
 		if root.right == nil {
-			root.right = &node{nil, nil, key, 0}
+			root.right = &avl{nil, nil, key, 0}
 		} else {
 			root.right.insert(key)
 		}
 	} else { // key < root.val
 		if root.left == nil {
-			root.left = &node{nil, nil, key, 0}
+			root.left = &avl{nil, nil, key, 0}
 		} else {
 			root.left.insert(key)
 		}
@@ -132,15 +132,49 @@ func (root *node) insert(key int) *node {
 	return root
 }
 
-func (root *node) delete(key int) *node {
-	// TODO: finish the method
-	if key == root.key {
-
+// Precondition: the key must be in the tree
+func (root *avl) delete(key int) *avl {
+	if root == nil {
+		return root
 	}
+
+	// BST Deletion
+	if root.key < key {
+		root.left.delete(key)
+	} else if root.key > key {
+		root.right.delete(key)
+	} else {
+		// If node only has a child
+		if root.left == nil {
+			temp := root.right
+			root = nil
+			return temp
+		}
+		if root.right == nil {
+			temp := root.left
+			root = nil
+			return temp
+		}
+
+		succ := root.right.getMinNode()
+		root.right = root.right.delete(succ.key)
+	}
+
+	// Check if root has one child
+	if root == nil {
+		return root
+	}
+
+	// TODO: Adjusting height
+
+	// TODO: Balancing the three
+
+	// Placeholder
+	return nil
 }
 
 func main() {
-	root := &node{nil, nil, 10, 0}
+	root := &avl{nil, nil, 10, 0}
 	root = root.insert(5)
 	root = root.insert(1)
 	fmt.Println(root)
