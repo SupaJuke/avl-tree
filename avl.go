@@ -3,6 +3,7 @@ package main
 import (
 	// External imports
 	"fmt"
+	"strconv"
 
 	"./utils"
 )
@@ -85,19 +86,19 @@ func (node *avl) rotateRight() *avl {
 }
 
 // Return new root (if rotated)
-func (root *avl) insert(key int) *avl {
+func (root *avl) Insert(key int) *avl {
 	// Inserting
 	if key > root.key {
 		if root.right == nil {
 			root.right = &avl{nil, nil, key, 0}
 		} else {
-			root.right.insert(key)
+			root.right = root.right.Insert(key)
 		}
 	} else { // key < root.val
 		if root.left == nil {
 			root.left = &avl{nil, nil, key, 0}
 		} else {
-			root.left.insert(key)
+			root.left = root.left.Insert(key)
 		}
 	}
 
@@ -133,31 +134,29 @@ func (root *avl) insert(key int) *avl {
 }
 
 // Precondition: the key must be in the tree
-func (root *avl) delete(key int) *avl {
+func (root *avl) Delete(key int) *avl {
 	if root == nil {
 		return root
 	}
 
 	// BST Deletion
-	if root.key < key {
-		root.left.delete(key)
-	} else if root.key > key {
-		root.right.delete(key)
+	if key < root.key {
+		root.left = root.left.Delete(key)
+	} else if key > root.key {
+		root.right = root.right.Delete(key)
 	} else {
-		// If node only has a child
+		// If node is a leaf or has only 1 child
 		if root.left == nil {
-			temp := root.right
-			root = nil
-			return temp
-		}
-		if root.right == nil {
-			temp := root.left
-			root = nil
-			return temp
+			root = root.right
+			return root
+		} else if root.right == nil {
+			root = root.left
+			return root
 		}
 
 		succ := root.right.getMinNode()
-		root.right = root.right.delete(succ.key)
+		root.key = succ.key
+		root.right = root.right.Delete(succ.key)
 	}
 
 	// Check if root has one child
@@ -165,17 +164,83 @@ func (root *avl) delete(key int) *avl {
 		return root
 	}
 
-	// TODO: Adjusting height
+	// Adjusting height
+	root.height = utils.GetMax(root.left.getHeight(), root.right.getHeight()) + 1
 
-	// TODO: Balancing the three
+	// Balancing the three
+	bf := root.getBF()
+
+	// Left heavy
+	if bf < -1 {
+		// Need to rotate twice
+		if root.left.getBF() > 0 {
+			root.left = root.left.rotateLeft()
+		}
+		root = root.rotateRight()
+	}
+
+	// Right heavy
+	if bf > 1 {
+		// Need to rotate twice
+		if root.right.getBF() < -1 {
+			root.right = root.right.rotateLeft()
+		}
+		root = root.rotateLeft()
+	}
 
 	// Placeholder
-	return nil
+	return root
+}
+
+func (root *avl) PrintPreOrder() string {
+	if root == nil {
+		return ""
+	}
+	if root.left == nil && root.right == nil {
+		return strconv.Itoa(root.key)
+	} else {
+		str := ""
+		str += strconv.Itoa(root.key) + " "
+		str += root.left.PrintPreOrder() + " "
+		str += root.right.PrintPreOrder()
+		return str
+	}
+}
+
+func (root *avl) PrintInOrder() string {
+	if root == nil {
+		return ""
+	}
+	if root.left == nil && root.right == nil {
+		return strconv.Itoa(root.key)
+	} else {
+		str := ""
+		// Left child
+		if root.left != nil {
+			str += root.left.PrintInOrder() + " "
+		}
+
+		// Node
+		str += strconv.Itoa(root.key) + " "
+
+		// Right child
+		if root.right != nil {
+			str += root.right.PrintInOrder()
+		}
+
+		return str
+	}
 }
 
 func main() {
 	root := &avl{nil, nil, 10, 0}
-	root = root.insert(5)
-	root = root.insert(1)
+	root = root.Insert(5)
+	root = root.Insert(12)
+	root = root.Insert(11)
+	root = root.Insert(13)
+	// fmt.Println(root.PrintPreOrder())
+	fmt.Println(root.PrintInOrder())
+	root = root.Delete(5)
+	fmt.Println(root.PrintInOrder())
 	fmt.Println(root)
 }
